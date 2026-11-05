@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rede de conselheiros CVM: quem divide conselho com quem</title>
+  <meta name="description" content="Grafo dos conselheiros e diretores das companhias abertas brasileiras, montado com dados públicos da CVM de 2021 a 2025: centralidades, concentração de poder e predição de conexões. Neo4j, NetworKit, Node2Vec, FastAPI e Sigma.js.">
+  <meta property="og:title" content="Rede de conselheiros CVM">
+  <meta property="og:description" content="Quem divide conselho com quem nas companhias abertas brasileiras, e quanto poder essas sobreposições concentram. Dados públicos da CVM, código aberto.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:image" content="img/explorer.webp">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="wrap top">
+    <a class="wordmark" href="./">Rede de conselheiros CVM</a>
+    <a class="link" href="https://github.com/Appa019/board-network-brazil">Código no GitHub</a>
+  </header>
+
+  <main>
+    <section class="hero wrap" aria-labelledby="titulo">
+      <h1 id="titulo">Quem divide conselho com quem</h1>
+      <div class="hero-row">
+        <p class="lede">Grafo dos conselheiros e diretores das companhias abertas brasileiras, montado com os Formulários de Referência públicos da CVM de 2021 a 2025. Mede quanto da rede passa por poucas pessoas e estima quais ligações tendem a surgir.</p>
+        <div class="actions">
+          <a class="btn" href="https://github.com/Appa019/board-network-brazil">Ver o código no GitHub</a>
+          <a class="link" href="#como-e-feito">Como rodar</a>
+        </div>
+      </div>
+      <figure class="shot">
+        <img src="img/explorer.webp" width="2200" height="1375" fetchpriority="high"
+             alt="Tela Explorer do app: centenas de conselheiros desenhados como pontos coloridos por comunidade, os maiores com o nome ao lado, e filtros de busca, ano, setor e mínimo de conexões no alto.">
+        <figcaption class="note">Explorer em Sigma.js (WebGL): os 500 conselheiros de maior PageRank. O tamanho do ponto é o PageRank e a cor, a comunidade.</figcaption>
+      </figure>
+    </section>
+
+    <section class="wrap" aria-labelledby="grafo">
+      <div class="section-head">
+        <h2 id="grafo">Do formulário ao grafo</h2>
+        <p>Na carga de 2021 a 2025 entraram 12.788 pessoas, 2.561 companhias do cadastro da CVM e 349.232 pares de pessoas que dividem um conselho ou uma diretoria.</p>
+      </div>
+      <div class="split">
+        <div class="text">
+          <h3>Lê o que as companhias declaram</h3>
+          <p>O ETL baixa os arquivos do Formulário de Referência no portal de dados abertos da CVM, lê os CSVs, que mudam de colunas e de encoding de um ano para outro, e padroniza os cargos. Como os dados não trazem CPF, cada pessoa é identificada pelo nome normalizado junto com a data de nascimento.</p>
+          <h3 class="gap">Guarda tudo no Neo4j</h3>
+          <p>Pessoas, companhias e setores viram nós, e cada cargo vira uma aresta com o órgão, a data de eleição e o ano. Quem senta no mesmo órgão ganha uma ligação direta, com peso, e as métricas rodam sobre essa projeção.</p>
+        </div>
+        <figure class="shot">
+          <img src="img/perfil.webp" width="2200" height="1375" loading="lazy"
+               alt="Perfil de um membro no app: PageRank, betweenness, degree, eigenvector, closeness e k-core em blocos, e ao lado a lista das companhias em que a pessoa tem cargo.">
+          <figcaption class="note">Perfil de um membro: as centralidades calculadas e as companhias em que ele tem cargo.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="wrap" aria-labelledby="poder">
+      <h2 id="poder">Quanto poder se concentra</h2>
+      <div class="split flip">
+        <div class="text">
+          <p>As centralidades rodam no NetworKit, em C++ paralelo: grau, intermediação, proximidade, autovetor e PageRank para cada pessoa, mais k-core e coeficiente de agrupamento. O Louvain separou a rede em 143 comunidades, com modularidade de 0,79.</p>
+          <p>Com as 349 mil arestas, o cálculo inteiro levou 54 segundos numa máquina de 16 threads. O resultado volta para o Neo4j e alimenta o painel.</p>
+        </div>
+        <figure class="shot">
+          <img src="img/dashboard.webp" width="2200" height="1375" loading="lazy"
+               alt="Dashboard do app: totais de membros, empresas, conexões e comunidades, o ranking dos mais conectados por PageRank e o quadro de concentração de poder com Gini, HHI, índice de interlocking e densidade.">
+          <figcaption class="note">Dashboard: ranking por PageRank e os índices de concentração da rede.</figcaption>
+        </figure>
+      </div>
+
+      <h3 class="list-title">O que mais é medido</h3>
+      <ul class="metrics">
+        <li><strong>Gini e HHI</strong> Desigualdade na distribuição de assentos entre as pessoas.</li>
+        <li><strong>Índice de interlocking</strong> Quanto as companhias estão ligadas por conselheiros em comum, como em Mizruchi (1996).</li>
+        <li><strong>Buracos estruturais</strong> A restrição de Burt, que mostra quem faz ponte entre grupos.</li>
+        <li><strong>Interlocking entre setores</strong> A matriz de conselheiros compartilhados entre os setores.</li>
+        <li><strong>Mundo pequeno e rich-club</strong> O sigma de mundo pequeno contra grafos aleatórios, e se os mais conectados se ligam entre si.</li>
+        <li><strong>Distribuição de grau</strong> Ajuste de lei de potência com alpha, xmin e p-valor, comparado com a lognormal.</li>
+        <li><strong>Correlação entre centralidades</strong> Spearman entre as cinco medidas, para ver onde elas discordam.</li>
+        <li><strong>Resiliência</strong> O tamanho do maior componente ao retirar 1%, 2%, 5% e 10% dos nós de maior PageRank, contra a retirada aleatória.</li>
+      </ul>
+    </section>
+
+    <section class="wrap" aria-labelledby="previsao">
+      <h2 id="previsao">Quais ligações tendem a surgir</h2>
+      <div class="split">
+        <div class="text">
+          <p>O Node2Vec gera um vetor de 128 dimensões por pessoa, com 80 caminhadas de 20 passos. Um Random Forest combina esses vetores, pelo produto de Hadamard, com Jaccard, Adamic-Adar, preferential attachment e resource allocation.</p>
+          <p>O corte é temporal: treina com a rede até 2023 e testa nas ligações novas. Cada heurística sozinha também é medida, como linha de base para o modelo.</p>
+          <p>A lista de membros ordena por PageRank ou intermediação e leva ao perfil de cada um.</p>
+        </div>
+        <figure class="shot">
+          <img src="img/ranking.webp" width="2200" height="1375" loading="lazy"
+               alt="Tela Membros do app: tabela com nome, cargo, PageRank, betweenness e comunidade de cada conselheiro, ordenada por PageRank.">
+          <figcaption class="note">Membros: a tabela ordenada por PageRank, com cargo e comunidade.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="wrap" id="como-e-feito" aria-labelledby="feito">
+      <div class="stack-wrap">
+        <h2 id="feito">Como é feito</h2>
+        <div>
+          <dl class="stack">
+            <dt>API</dt><dd>Python 3.12, FastAPI assíncrono, Pydantic</dd>
+            <dt>Banco de grafo</dt><dd>Neo4j 5 no Docker</dd>
+            <dt>Métricas</dt><dd>NetworKit em C++ paralelo, NetworkX, python-louvain e SciPy</dd>
+            <dt>Modelo</dt><dd>Node2Vec e Random Forest do scikit-learn</dd>
+            <dt>Interface</dt><dd>Next.js 16, TypeScript, Tailwind v4, TanStack Query, Sigma.js e graphology</dd>
+            <dt>Dados</dt><dd><a class="link" href="https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/FRE/DADOS/">Formulário de Referência no portal de dados abertos da CVM</a>, com atualização mensal pelo GitHub Actions</dd>
+          </dl>
+          <pre><code>docker compose up -d
+cd backend
+python scripts/run_etl.py --years 2021 2022 2023 2024 2025
+python scripts/compute_metrics.py
+python scripts/train_model.py</code></pre>
+          <p class="note">Sem CPF, homônimos com a mesma data de nascimento viram uma pessoa só. O Explorer desenha no máximo 500 nós, escolhidos por PageRank.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <p class="footer-name" aria-hidden="true">Rede de conselheiros</p>
+    <div class="footer-row">
+      <p class="note">Projeto de estudo com dados públicos da CVM.</p>
+      <nav aria-label="Links">
+        <a class="link" href="https://github.com/Appa019/board-network-brazil">Código no GitHub</a>
+        <a class="link" href="https://pedropestana.dev">Pedro Pestana</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
